@@ -85,13 +85,13 @@ export const api = {
   async sendChatMessage(
     username: string, 
     question: string, 
-    borderScope: string,
+    
     onTokenReceived: (token: string) => void
   ): Promise<void> {
     const response = await fetch(`${BASE_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, question, affiliate: borderScope }),
+      body: JSON.stringify({ username, question }),
     });
 
     if (!response.ok) {

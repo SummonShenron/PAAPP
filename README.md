@@ -1,50 +1,128 @@
-## Requirements & Automation
+🔮 Imperium Cockpit: Local Personal Assistant Core
 
-The application uses a setup script designed for **Windows (PowerShell)**. The script leverages Windows Package Manager (`winget`) to check for and interactively install system-level dependencies if they are missing upon user consent.
+A high-performance, private, localized AI assistant dashboard designed to manage your schedule, organize sticky tasks, and act as an offline brain. Powered by Ollama (Llama 3) and FastAPI, with real-time Google Calendar integration, client-side persistence, and custom styling inspired by the Arcosian Light and Imperium Dark aesthetics.
 
-To ensure the automated setup completes successfully:
-1. Run your terminal as an **Administrator** or in Visual Studio Code (required for `winget` installations).
-2. Ensure you have an active internet connection to download packages and the **Llama 3** model.
-3. if in VSC, create a virtual environment for the install(s)
+🚀 Key Features
 
----
+Real-Time Google Calendar Synchronization:
 
-## Getting Started & Execution
+Create Events: Schedule appointments via natural language (e.g., "Schedule coding block Sunday at 3 PM").
 
-PowerShell scripts are provided in the root directory to automate cross-platform execution and environment builds.
+Update Events: Modify titles, descriptions, and times dynamically.
 
-> *Note: If you encounter a script execution policy restriction in your terminal, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` before executing.*
+List Agenda: View your authentic daily timeline with absolute zero hallucinations.
 
-### 1. First-Time Environment Setup
-If you are running the project for the first time, simply execute the bootstrapper script:
-./start.ps1
+Local Sticky Note Manager: A lightweight database (sticky_notes.json) allowing you to pin critical facts, tasks, passwords, or codes that the assistant can reference instantly.
 
-What this script automates for you:
+Persistent Session Recovery:
 
-Looks for Python 3.11, Node.js, and Ollama and prompts for consent to install via winget if missing.
+Backend Serialization: Raw LangChain message classes (HumanMessage, AIMessage, SystemMessage) are dynamically translated and saved on disk (chat_history.json), surviving server restarts.
 
-Provisions an isolated Python virtual environment (.venv) and upgrades pip.
+Client Persistence: Frontend chat histories are securely bound to individual logged-in operators in localStorage, surviving refreshes and session restarts.
 
-Installs all backend dependencies from requirements.txt.
+Robust Intent Classification: Custom backend JSON-stripping regex handler ensures LLM-driven actions run flawlessly even if Llama 3 wraps its payloads in markdown backticks or introductory text.
 
-Compiles and installs frontend UI dependencies (npm install).
+Interactive Sandbox Bypass: Automatically falls back to offline sandbox mode on the frontend if the local backend server is temporarily shut down, keeping the UI fully interactive.
 
-Wakes up the Ollama background engine and pulls the Llama 3 model file.
+🛠️ Project Architecture
 
-Purges stale indexes and triggers the initialization chunking pipeline (ingest.py).
+local_agent/                  # Root Project Directory
+├── app.py                    # Main Server, Intent Router & Streaming Engine
+├── directory.json            # Identity Security Profile Registry
+├── chat_history.json         # Saved Local Conversations (Auto-Generated)
+├── backend/                  # Local Action Tool Modules
+│   └── tools/                
+│       ├── calendar_tool.py  # Google Calendar API Client
+│       ├── notes_tool.py     # Local Task/Sticky Note Database
+│       └── sticky_notes.json # Active Sticky Notes (Auto-Generated)
+└── local/                    # React Frontend Application (Pure JS/TS Environment)
+    ├── public/               # Static Web Assets
+    └── src/                  # React Source Code
+        ├── assets/           # UI Images and Gifs
+        ├── components/       # Interface Elements
+        ├── pages/            # View Templates
+        │   ├── Chat.tsx      # Persistent Chat Interface with Frieza Style
+        │   └── LandingPage.tsx # Identity Gateway & Sandbox Auto-Bypass
+        ├── api.ts            # Frontend API Connection Layer
+        └── index.css         # Theme Styles & CSS Variables
 
-Launches the FastAPI server and Vite frontend dev server in separate background instances.
 
-2. Subsequent Faster Bootups
-Once the initial configuration is complete, you can bypass dependency and model installation checks to instantly launch the web app by running:
-./local_start.ps1
 
-## Automated Data Ingestion Pipelines
+💻 Prerequisites & Setup
 
-The project implements a two-tiered data pipeline architecture to separate initial system bootstrapping from runtime data adjustments:
+1. Local LLM (Ollama)
 
-### 1. Database Bootstrapper (`ingest.py`)
-When the application is launched for the first time via `start.ps1`, the system automatically invokes the bootstrapper script.
-- **Purpose:** Purges stale database remnants to prevent vector index collisions, scans the root drop-zones for default data, splits content into clean `600-token` overlapping semantic structures, and locks down the initial vector blocks inside `chroma_db/`.
+Ensure you have Ollama installed and running locally on your workstation, then pull the required model:
 
-if you would like to ingest new material, you must place a new .pdf inside either the index-db\Affiliate_A or Affilaite_B (or create a new one) folders, then navigate to the function app directory (cd local-function-app) and run start.ps1 to start it. it will pick up and ingest the new files and exit upon completion. Additionally, you can also use the self-service page in the app itself to ingest and remove material.
+ollama pull llama3
+
+
+2. Google Calendar API Integration
+
+To connect your assistant to your real-world calendar:
+
+Go to the Google Cloud Console.
+
+Create a new project, enable the Google Calendar API, and generate an OAuth 2.0 Client ID.
+
+Download the client credentials JSON, rename it to credentials.json, and place it in your backend/ folder.
+
+On your first calendar tool interaction, the Python backend will prompt you in the terminal to authorize the app through your browser, generating a persistent local token file.
+
+3. Backend Setup
+
+Set up your isolated Python virtual environment and launch your API gateway:
+
+# Navigate to the backend folder
+cd backend
+
+# Create & activate a virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate
+
+# Install dependencies (Uvicorn, FastAPI, Langchain, Google API Client)
+pip install fastapi uvicorn pydantic langchain langchain-community google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+# Run the live, hot-reloading development server
+uvicorn app:app --host 12000 --port 8000 --reload
+
+
+4. Frontend Setup
+
+Launch the React interface:
+
+# Navigate to the React frontend directory
+cd local
+
+# Install packages
+npm install
+
+# Boot up the development server
+npm run dev
+
+
+📋 Conversation Logs & Commands
+
+Your Llama 3 model is instructed to parse these structures contextually. You can try typing these exact prompts into the Cockpit chat:
+
+Sticky Notes
+
+Save Information: "Remember that my entry gate code is 9981"
+
+Retrieve Facts: "What was my gate code again?"
+
+List Sticky Board: "Show me all of my sticky notes"
+
+Clear Elements: "Delete the sticky note about my gate code"
+
+Google Calendar
+
+Create Appointment: "Add a Coding Session for today at 3:00 PM"
+
+Change Appointment: "Move my coding session to tomorrow at 5:00 PM"
+
+Check Schedule: "What do I have on my schedule today?"
+
+🎨 Theme Configuration
+
+To swap between the Arcosian Light theme and the Imperium Dark theme, simply click the "Hero / Dark" selector button in the top navigation bar. Theme configurations are automatically saved to your browser session's local storage properties, preventing style resets on refresh!

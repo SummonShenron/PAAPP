@@ -11,3 +11,6 @@ pypdf>=4.0.0
 watchfiles==0.22.0
 langchain-text-splitters>=0.0.1
 python-multipart>=0.0.5
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

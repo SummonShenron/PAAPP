@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import sonicImg from '../assets/sonicandshadow.jpg';
+import friezaImg from '../assets/frieza.jpg';
 
 interface LandingPageProps {
   onEnter: (username: string) => void;
@@ -10,9 +10,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
   const [selectedPersona, setSelectedPersona] = useState<string>('jack_admin');
 
   const personas = [
-    { id: 'jack_admin', name: 'Jack Harper (Global Admin)', desc: 'Access to both Sonic & Dragon Ball repositories.' },
-    { id: 'sonic_user', name: 'Sonic Security Officer', desc: 'Strictly isolated to Workspace A (Sonic Lore).' },
-    { id: 'dragon_ball_user', name: 'Z-Fighter Analyst', desc: 'Strictly isolated to Workspace B (Dragon Ball Data).' },
+    { id: 'jack_admin', name: 'Jack Harper (Global Admin)', desc: 'Click enter to access your personal agent.' },
   ];
 
   const handlePortalEntry = () => {
@@ -25,12 +23,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
     <div className="landing-page">
       <div className="landing-left">
         <div className="landing-hero-text">
-          <h2>SONIC ASSISTANT</h2>
-          <h3>RAG Pipeline & Multi-Tenant Data Isolation System.</h3>
+          <h2>Personal Agent</h2>
+          <h3>Agentic Ai.</h3>
           <h4>Built by Jack Harper.</h4>
         </div>
 
-        {/* 🎯 THE PORTFOLIO FIX: Interactive Identity Emulation */}
+        {/* THE PORTFOLIO FIX: Interactive Identity Emulation */}
         <div className="persona-selector-container" style={{ margin: '2rem 0', width: '100%', maxWidth: '400px' }}>
           <label 
             htmlFor="persona-select" 
@@ -71,7 +69,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
           ENTER
         </button>
       </div>
-      <div className="landing-right" style={{ backgroundImage: `url(${sonicImg})` }}>
+      <div className="landing-right" style={{ backgroundImage: `url(${friezaImg})` }}>
         {/* Background image panel */}
       </div>
     </div>

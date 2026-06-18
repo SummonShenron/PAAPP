@@ -1,19 +1,20 @@
 
-/* ==========================================================================
-   1. GLOBAL RESETS & THEME VARIABLES
-   ========================================================================== */
 :root {
-  --bg-main: #ffffff;       /* Ultra-soft, calming pastel sky blue backdrop */
-  --bg-surface: #ffffff;    /* Clean white surface containers to break up the color */
-  --bg-surface-hover: #f1f5f9;
-  --border-color: #bfdbfe;  /* Gentle light-blue accent borders */
-  --text-main: #1e3a8a;     /* Deep, soft royal blue for comfortable reading */
-  --text-muted: #60a5fa;    /* Balanced sky blue for auxiliary items */
-  --text: #000000;          /* Default text color (same as text-main for consistency) */
-  --accent-primary: #3b82f6; /* Smooth, modern classic blue (clean, non-aggressive) */
-  --accent-success: #10b981; /* Soft emerald green for secure badges */
-  --accent-danger: #ef4444;  /* Muted crimson for alerts */
-  --font-sans: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Surface & Layout Backdrops (FRIEZA'S WHITE & ICY ARMOR) */
+  --bg-main: #f3f4f6;           /* Pristine, cold light-gray background */
+  --bg-surface: #ffffff;        /* Pure white card backgrounds */
+  --bg-surface-hover: #eaeef5;  /* Soft icy tinted gray for interactive hovers */
+  --border-color: #d1d5db;      /* Clean gray line dividers */
+  
+  /* Text Configurations */
+  --text-main: #111827;         /* Deep obsidian black for readable prose */
+  --text-muted: #6b7280;        /* Muted slate gray for secondary labels/timestamps */
+  --text: #111827;
+  
+  /* Accent & Action Mapping (FRIEZA'S DEEP PURPLE JEWELS) */
+  --accent-primary: #6d28d9;    /* Rich, authoritative imperial purple */
+  --accent-success: #059669;    /* Emerald green for active connectivity states */
+  --accent-danger: #dc2626;     /* Crimson red for destructive actions/disconnects */
   --shadow:
       0 2px 4px rgba(0, 0, 0, 0.02),
       0 10px 20px rgba(0, 0, 0, 0.04),
@@ -28,15 +29,14 @@
 
 /* THEME OVERRIDE: SHADOW MODE (DARK CRIMSON) */
 .theme-shadow {
-  --bg-main: #353333;        
-  --bg-surface: #ffffff;     
-  --bg-surface-hover: #222228;
-  --border-color: #af2626;   
-  --text-main: #474343;      
-  --text-muted: #9ca3af;     
-  --accent-primary: #dc2626; 
-  --accent-success: #eab308; 
-  --accent-danger: #ff0000;  
+  --bg-main: #0b071e;           /* Deepest void space purple-black */
+  --bg-surface: #130d33;        /* Dark violet-tinted control surfaces */
+  --bg-surface-hover: #1e154d;  /* Lighter purple highlight depth for hover states */
+  --border-color: #2e226e;      /* Frosted neon-purple borders */
+  
+  /* Text Configurations */
+  --text-main: #f3f4f6;         /* Icy pale white text for heavy contrast */
+  --text-muted: #a78bfa; 
   --text: #ffffff;
 
   /* Component Overrides */
@@ -50,7 +50,7 @@
   --hero-overlay: linear-gradient(rgba(10, 10, 12, 0.4), rgba(10, 10, 12, 0.85));
   --input-text: var(--text-main);
   --card-text: #e5e7eb;
-  --loader-glow: drop-shadow(0 0 6px rgba(220, 38, 38, 0.7));
+  --loader-glow: drop-shadow(0 0 6px rgba(108, 38, 220, 0.7));
   /* Deeper, more aggressive black layering to cut through the dark theme */
   --shadow:
       0 4px 6px rgba(0, 0, 0, 0.3),
@@ -353,7 +353,7 @@ body, html {
 
 .message-bubble.user {
   align-self: flex-end;
-  background: #eff6ff;       /* Very soft, clean light blue bubble */
+  background: #fcf9ff;       /* Very soft, clean light blue bubble */
   color: var(--text-main);   /* Easy reading deep blue text */
   border: 1px solid #bfdbfe;
   box-shadow: var(--shadow);
@@ -379,9 +379,9 @@ body, html {
 
 .theme-shadow .message-bubble.user {
   align-self: flex-end;
-  background: #910000;       /* Very soft, clean light blue bubble */
+  background: var(--accent-primary);       /* Very soft, clean light blue bubble */
   color: var(--text);   /* Easy reading deep blue text */
-  border: 1px solid #910000;
+  border: 1px solid #2c0091;
   box-shadow: var(--shadow);
 }
 
@@ -404,7 +404,7 @@ body, html {
 }
 
 .query-card {
-  background: #dbeafe;
+  background: #fcf9ff;
   border: 1px solid var(--border-color);
   padding: 1rem;
   border-radius: 8px;
@@ -419,7 +419,7 @@ body, html {
 
 
 .theme-shadow .query-card {
-  background: #910000;                  
+  background: var(--accent-primary);                  
   border: 1px solid var(--border-color);
   filter: var(--loader-glow);         
 }

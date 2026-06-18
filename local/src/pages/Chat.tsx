@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import sonicImg from '../assets/sonicandshadow.jpg';
-import { Filters } from '../components/Filters';
-import { getDynamicExampleQuestions } from '../utils/Example_List';
 import { api } from '../api'; 
 import sonicSpinImg from '../assets/sonic-rolling.gif';
 import shadowSpinImg from '../assets/shadow.gif';
-import { SelfServicePage } from './SelfService';
+import friezaImg from '../assets/frieza.jpg';
+import friezaGif from '../assets/frieza.gif';
 
 interface Message {
   sender: 'user' | 'ai' | 'system';
@@ -17,52 +16,58 @@ interface ChatPageProps {
 }
 
 export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
-  const [username] = useState(() => localStorage.getItem('x-user-id') || 'Unknown Principal');
-  const [selectedAffiliate, setSelectedAffiliate] = useState<string>('All');
-  const [allowedAffiliates, setAllowedAffiliates] = useState<string[]>([]);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'chat' | 'self-service'>('chat');
-  const [messages, setMessages] = useState<Message[]>([
-    { sender: 'system', text: `What would you like to find out about, ${username}?` }
-  ]);
+  // Grab current authorized user signature
+  const [username] = useState(() => localStorage.getItem('x-user-id') || 'Jack H.');
+  
+  // 1. Warm-initialize the messages state from localStorage to prevent auto-clearing
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const persistedHistory = localStorage.getItem(`chat-messages-${username}`);
+    if (persistedHistory) {
+      try {
+        return JSON.parse(persistedHistory);
+      } catch (e) {
+        console.error("Failed to parse persisted conversation logs:", e);
+      }
+    }
+    return [
+      { sender: 'system', text: `Good day, ${username.split(' ')[0]}. What can I handle for your schedule or dashboard today?` }
+    ];
+  });
+  
   const [input, setInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentExampleQuestions, setCurrentExampleQuestions] = useState<string[]>([]);
-  const [loadingCards, setLoadingCards] = useState<boolean>(false);
+  
   const [theme, setTheme] = useState<'sonic' | 'shadow'>(() => {
     const savedTheme = localStorage.getItem('saapp-theme');
     return (savedTheme === 'shadow' || savedTheme === 'sonic') ? savedTheme : 'sonic';
   });
-  // Ref anchor to target the scrollable chat container viewport
+
   const chatWindowRef = useRef<HTMLDivElement>(null);
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'sonic' ? 'shadow' : 'sonic'));
   };
+
+  // 2. Clear history updates both reactive states and physical client-side storage keys
   const handleClearChat = () => {
-    setMessages([
-      { sender: 'system', text: `What would you like to find out about, ${username}?` }
-    ]);
-    setSelectedAffiliate('All');
+    const initialMessage: Message[] = [
+      { sender: 'system', text: `Cleared. What else can I tackle for you, Jack?` }
+    ];
+    setMessages(initialMessage);
+    localStorage.removeItem(`chat-messages-${username}`);
   };
 
+  // 3. Sync themes to localStorage
   useEffect(() => {
     localStorage.setItem('saapp-theme', theme);
   }, [theme]);
 
+  // 4. Clean side-effect trigger: Auto-sync dialogue history to localStorage on any message mutations
   useEffect(() => {
-    // Defensive check: Don't fetch cards until permissions have actually loaded
-    if (allowedAffiliates.length === 0) return;
-    const syncQuestionPool = async () => {
-      setLoadingCards(true);
-      const questions = await getDynamicExampleQuestions(allowedAffiliates, selectedAffiliate);
-      setCurrentExampleQuestions(questions);
-      setLoadingCards(false);
-    };
+    localStorage.setItem(`chat-messages-${username}`, JSON.stringify(messages));
+  }, [messages, username]);
 
-    syncQuestionPool();
-  }, [allowedAffiliates, selectedAffiliate]);
-
-  // Auto-Scroll Hook: Fires instantly when messages update or streaming starts
+  // Reliable scroll anchor alignment
   useEffect(() => {
     if (chatWindowRef.current) {
       chatWindowRef.current.scrollTo({
@@ -81,7 +86,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
     setLoading(true);
 
     try {
-      await api.sendChatMessage(username, textToSend, selectedAffiliate, (newToken) => {
+      await api.sendChatMessage(username, textToSend, (newToken) => {
         setMessages(prev => {
           const updated = [...prev];
           const lastIndex = updated.length - 1;
@@ -96,7 +101,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
       });
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { sender: 'ai', text: "Vector assertion timed out. Check local engine allocations." }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: "Assistant connection timed out. Check local tool hooks." }]);
     } finally {
       setLoading(false);
     }
@@ -106,131 +111,104 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
     e.preventDefault();
     if (!input.trim()) return;
     handleSendMessage(input);
-    setInput('');
   };
 
+  // Determine whether user has engaged in active dialogue with the agent
   const hasChatted = messages.some(msg => msg.sender === 'user');
 
+  // Hardcoded core helper action starters
+  const agentQuickPrompts = [
+    "Schedule a Coding Session for Sunday at 3 PM",
+    "change my recent Arc Raiders session to be 1 hour instead of 30 minutes",
+    "What's on my agenda for today?"
+  ];
+
   return (
+    // Instead of two nested layout divs, we keep ONE root wrapper component and merge them!
     <div className={`portal-container ${theme === 'shadow' ? 'theme-shadow' : ''}`}>
+      
       <nav className="menu-navigator">
-        <div className="nav-logo"><a href="/" style={{ textDecoration: 'none' }}> {theme === 'sonic' ? '⚡Sonic Assistant' : '⚡Shadow Engine'}</a></div>
-        {/* 3. UPDATE THE NAV-LINKS SECTION TO HANDLE TAB NAVIGATION TOGGLES */}
+        <div className="nav-logo">
+          <a href="/" style={{ textDecoration: 'none' }}> 
+            {theme === 'sonic' ? '⚡Final Form' : '⚡Black Form'}
+          </a>
+        </div>
         <div className="nav-links">
           <span onClick={toggleTheme} className="theme-toggle-btn">
             {theme === 'sonic' ? 'Hero' : 'Dark'}
           </span>
-          
-          {/* Dashboard Tab Link */}
-          <span 
-            className={activeTab === 'chat' ? 'active' : ''} 
-            onClick={() => setActiveTab('chat')}
-          >
-            Dashboard
-          </span>
-          
-          {/* New Self Service Tab Link */}
-          <span 
-            className={activeTab === 'self-service' ? 'active' : ''} 
-            onClick={() => setActiveTab('self-service')}
-          >
-            Self Service
-          </span>
-          
-          <span onClick={onExit} className="nav-exit">Disconnect Session</span>
+          <span className="active">Cockpit</span>
+          <span onClick={onExit} className="nav-exit">Disconnect</span>
         </div>
       </nav>
 
-      {activeTab === 'self-service' ? (
-        // Render Self Service Page layout seamlessly underneath the persistent global navigation bar
-        <SelfServicePage />
-      ) : (
-        // Standard Chat Assistant Core Interface Layout View
-        <>
-          <div className="hero-banner" style={{ backgroundImage: `linear-gradient(rgba(18, 24, 36, 0.7), rgba(18, 24, 36, 0.95)), url(${sonicImg})` }}>
-            <div className="banner-context">
-              <h3>{theme === 'sonic' ? 'Sonic Assistant' : 'Shadow Engine'}</h3>
-              <h4>{theme === 'sonic' ? 'rolling around at the speed of thought.' : 'Behold the Ultimate Power.'}</h4>
-              {userEmail && <p className="badge">Principal Account Identity: {userEmail}</p>}
-            </div>
+      <header className="hero-banner" style={{ backgroundImage: `linear-gradient(rgba(18, 24, 36, 0.7), rgba(18, 24, 36, 0.95)), url(${friezaImg})` }}>
+        <div className="banner-context">
+          <h3>{theme === 'sonic' ? 'Personal Executive Assistant' : 'Shadow Automation Hub'}</h3>
+          <h4>{theme === 'sonic' ? 'Managing schedules at the speed of sound.' : 'Chaos Control Automation Engine.'}</h4>
+        </div>
+      </header>
+
+      <main className={`portal-body ${!hasChatted ? 'initial-state-view' : ''}`}>
+        {!hasChatted && (
+          <div className="example-cards-container">
+            {agentQuickPrompts.map((q, idx) => (
+              <div key={idx} className="query-card" onClick={() => !loading && handleSendMessage(q)}>
+                <p>{q}</p>
+                <span>→</span>
+              </div>
+            ))}
           </div>
+        )}
 
-          <main className={`portal-body ${!hasChatted ? 'initial-state-view' : ''}`}>
-            {!hasChatted && (
-              <div className="example-cards-container">
-                {loadingCards ? (
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', padding: '1rem' }}>
-                    Querying directory indices for security group context...
-                  </div>
-                ) : (
-                  currentExampleQuestions.map((q, idx) => (
-                    <div key={idx} className="query-card" onClick={() => !loading && handleSendMessage(q)}>
-                      <p>{q}</p>
-                      <span>→</span>
-                    </div>
-                  ))
-                )}
+        {hasChatted && (
+          <div className="chat-window" ref={chatWindowRef}>
+            {messages
+              .filter(msg => msg.sender !== 'system') // Simplified filtering logic
+              .map((msg, index) => (
+                <div key={index} className={`message-bubble ${msg.sender}`}>
+                  <div className="message-sender">{msg.sender.toUpperCase()}</div>
+                  <div className="message-text">{msg.text}</div>
+                </div>
+              ))}
+              
+            {loading && (
+              <div className="message-bubble ai thinking sonic-loader-container">
+                <img 
+                  src={theme === 'sonic' ? friezaGif : friezaGif} 
+                  alt="Spinning..." 
+                  className={theme === 'sonic' ? "sonic-spin-gif" : "shadow-spin-gif"} 
+                  />
+                <div className="loading-text">
+                  Executing automated agent instructions...
+                </div>
               </div>
             )}
+          </div>
+        )}
 
-            {hasChatted && (
-              <div className="chat-window" ref={chatWindowRef}>
-                {messages
-                  .filter(msg => !(hasChatted && msg.sender === 'system'))
-                  .map((msg, index) => (
-                    <div key={index} className={`message-bubble ${msg.sender}`}>
-                      <div className="message-sender">{msg.sender.toUpperCase()}</div>
-                      <div className="message-text">{msg.text}</div>
-                    </div>
-                  ))}
-                  
-                {loading && (
-                  <div className="message-bubble ai thinking sonic-loader-container">
-                    {theme === 'sonic' ? (
-                      <img src={sonicSpinImg} alt="Spinning..." className="sonic-spin-gif" />
-                    ) : (
-                      <img src={shadowSpinImg} alt="Spinning..." className="shadow-spin-gif" />
-                    )}
-                    <div className="loading-text">
-                      Collecting rings & tokens...
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="controls-footer">
-              <form onSubmit={onSubmitForm} className="chat-input-area">
-                <input
-                  type="text"
-                  placeholder="Ask a question against your isolated data index..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={loading}
-                />
-                <button className="submit-button" type="submit" disabled={loading || !input.trim()}>Send</button>
-                <button
-                  className="clear-button" 
-                  type="button" 
-                  onClick={handleClearChat} 
-                  disabled={loading}
-                  style={{ backgroundColor: '#334155', marginLeft: '0.5rem' }}
-                >
-                  Clear
-                </button>
-              </form>
-
-              <Filters 
-                selectedAffiliate={selectedAffiliate}
-                setSelectedAffiliate={setSelectedAffiliate}
-                loadingChat={loading}
-                allowedAffiliates={allowedAffiliates}
-                setAllowedAffiliates={setAllowedAffiliates}
-              />
-            </div>
-          </main>
-        </>
-      )}
+        <footer className="controls-footer">
+          <form onSubmit={onSubmitForm} className="chat-input-area">
+            <input
+              type="text"
+              placeholder="Ask a question or update your Google Calendar..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={loading}
+            />
+            <button className="submit-button" type="submit" disabled={loading || !input.trim()}>Send</button>
+            <button
+              className="clear-button" 
+              type="button" 
+              onClick={handleClearChat} 
+              disabled={loading}
+              style={{ backgroundColor: '#334155', marginLeft: '0.5rem' }}
+            >
+              Clear
+            </button>
+          </form>
+        </footer>
+      </main>
     </div>
   );
 };

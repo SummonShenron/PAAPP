@@ -38,3 +38,13 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Google OAuth Secrets & Session Tokens (CRITICAL)
+credentials.json
+token.json
+*.json.token
+client_secrets.json
+
+# Local Assistant State (Private)
+chat_history.json
+backend/tools/sticky_notes.json
