@@ -2,7 +2,7 @@ Clear-Host
 $ProjectDir = $PSScriptRoot
 
 Write-Host "=====================================================================" -ForegroundColor Cyan
-Write-Host "               ARK KNOWLEDGE GATEWAY INITIALIZATION TERMINAL        " -ForegroundColor Cyan
+Write-Host "               PAAPP HEADLESS TOOL HUB INITIALIZATION TERMINAL       " -ForegroundColor Cyan
 Write-Host "=====================================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -33,21 +33,12 @@ if (-not (Test-Path $VenvPath)) {
 
 # --- APPLICATION ORCHESTRATION LAYER ---
 
-# 1. Start the FastAPI Backend Engine (Port 8000)
-Write-Host "[*] Launching FastAPI Security Backend..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle = 'ARK Backend (FastAPI)'; cd '$ProjectDir'; .\.venv\Scripts\uvicorn app:app --reload --port 8002"
-
-# Small delay to let the backend bind ports cleanly
-Start-Sleep -Seconds 2
-
-# 2. Start the Vite Frontend Server (Forced onto 127.0.0.1:8080)
-Write-Host "[*] Launching Vite Frontend Development Server..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle = 'ARK Frontend (Vite)'; cd 'local'; npm run dev -- --host 127.0.0.1 --port 8081"
+Write-Host "[*] Launching PAAPP Headless Tool Hub (FastAPI)..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle = 'PAAPP Headless (FastAPI)'; cd '$ProjectDir'; .\.venv\Scripts\uvicorn headless_app:app --reload --port 8003"
 
 Write-Host ""
 Write-Host "=====================================================================" -ForegroundColor Green
-Write-Host "   SUCCESS: Both engine cores active in separate system instances!   " -ForegroundColor Green
-Write-Host "   - Backend: http://127.0.0.1:8002" -ForegroundColor Green
-Write-Host "   - Frontend: http://127.0.0.1:8081" -ForegroundColor Green
+Write-Host "   SUCCESS: PAAPP Headless Tool Hub is now active!                    " -ForegroundColor Green
+Write-Host "   - Headless API: http://127.0.0.1:8003/docs                         " -ForegroundColor Green
 Write-Host "=====================================================================" -ForegroundColor Green
 Write-Host ""

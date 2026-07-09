@@ -75,3 +75,4 @@ def clear_sticky_note(key: str) -> str:
             "message": f"Successfully removed the sticky note for '{deleted['title']}'."
         })
     return json.dumps({"status": "error", "message": f"No sticky note found matching '{key}' to clear."})
+
