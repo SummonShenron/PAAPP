@@ -43,6 +43,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
   });
 
   const chatWindowRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'sonic' ? 'shadow' : 'sonic'));
@@ -67,14 +68,25 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
     localStorage.setItem(`chat-messages-${username}`, JSON.stringify(messages));
   }, [messages, username]);
 
-  // Reliable scroll anchor alignment
+  // Latency-aware Scroll Anchor Hook
   useEffect(() => {
-    if (chatWindowRef.current) {
-      chatWindowRef.current.scrollTo({
-        top: chatWindowRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({
+          // Use instant snap ('auto') during loading/streaming, smooth during idle clicks
+          behavior: loading ? 'auto' : 'smooth',
+          block: 'end',
+        });
+      }
+    };
+
+    // 1. Fire immediately for rapid reactive updates
+    scrollToBottom();
+
+    // 2. Fire with a tiny delay to allow the browser to paint newly loaded images/gifs (fixes refresh issue)
+    const timer = setTimeout(scrollToBottom, 50);
+
+    return () => clearTimeout(timer);
   }, [messages, loading]);
 
   const handleSendMessage = async (textToSend: string) => {
@@ -187,7 +199,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ onExit }) => {
           </div>
         )}
 
-        <footer className="controls-footer">
+        <footer className="controls-footer" ref={messagesEndRef}>
           <form onSubmit={onSubmitForm} className="chat-input-area">
             <input
               type="text"

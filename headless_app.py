@@ -21,13 +21,13 @@ from backend.tools.calendar_tool import (
     list_google_calendar_events
 )
 from backend.tools.notes_tool import add_sticky_note, read_sticky_notes, clear_sticky_note
-from backend.tools.time_tracking import log_time
+from backend.tools.time_tracking import TimeEntry, log_time_internal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USER_DIRECTORY_FILE = os.path.join(BASE_DIR, "directory.json")
 HISTORY_FILE = os.path.join(BASE_DIR, "chat_history.json")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-app = FastAPI(title="Personal Assistant Cockpit API")
+app = FastAPI(title="Headless PAAPP API")
 logger = logging.getLogger("SASS Logger")
 app.add_middleware(
     CORSMiddleware,
@@ -139,7 +139,7 @@ async def simulate_token_stream(full_text: str, delay: float = 0.01):
         await asyncio.sleep(delay)
 
 # --- MAIN STREAMING CHAT COCKPIT ENDPOINT ---
-@app.post("/api/chat")
+@app.post("/api/headless-chat")
 async def secure_chat(request: ChatRequest, x_saapp: str | None = Header(default=None)):    
     username = request.username.strip()
     question = request.question.strip()
@@ -190,29 +190,32 @@ Format:
 OPTION 6: Read, view, list, or find sticky notes, todo list, or facts.
 Format:
 {{"action": "call_tool", "tool": "read_sticky_notes", "search_key": "Optional Note Title Key or empty string to list all"}}
-OPTION 7 : Log or track time spent on an activity.
-Format:
-{"action": "call_tool", "tool": "log_time", "activity": "Job Apps", "minutes": 60, "date_iso": "YYYY-MM-DD", "notes": ""}
 
-Trigger phrases:
-- "log time"
-- "record time"
-- "track time"
-- "time tracking"
-- "log 1 hour"
-- "log one hour"
-- "log 30 minutes"
-- "add another hour"
-- "log more time"
-- "job apps"
-- "job applications"
-- "coding"
-- "work"
-- "today"
-
-OPTION 8: Delete, clear, or remove a sticky note or task.
+OPTION 7: Delete, clear, or remove a sticky note or task.
 Format:
-{{"action": "call_tool", "tool": "clear_sticky_note", "key": "Note Title to remove"}}"""
+{{"action": "call_tool", "tool": "clear_sticky_note", "key": "Note Title to remove"}}
+
+OPTION 8: Log or track time spent on an activity.
+Format:
+{{"action": "call_tool", "tool": "log_time", "activity": "...", "minutes": 60, "date_iso": "...", "notes": "Description goes here"}}
+
+CRITICAL ROUTING OVERRIDE:
+If the user message begins with "log", "track", or "record", ALWAYS choose OPTION 8 (log_time).
+This rule overrides all calendar heuristics, even if the message contains words like "call", "phone", "meeting", "with", or "today".
+
+MANDATORY FIELD RULES FOR OPTION 8:
+When choosing OPTION 8, ALWAYS include:
+- "activity": extracted from the user message
+- "minutes": extracted from the user message
+- "date_iso": TODAY'S DATE unless the user explicitly specifies another date
+
+NEVER omit "date_iso". It is required.
+
+Examples:
+- "log 1 hour of talking on the phone for today"
+- "track 30 minutes of debugging"
+- "record 2 hours of cleaning"
+"""
 
     try:
         router_response = llm.invoke(router_prompt)
@@ -273,39 +276,32 @@ Format:
         if is_saapp:
             return {"message": formatted_msg}
         return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
-     # --- PATTERN D: STREAM TOOL - LOG TIME (TIME TRACKING) ---
+
+    # --- PATTERN D: STREAM TOOL - LOG TIME ---
     elif action_type == "call_tool" and tool_name == "log_time":
-        # Call your internal time-tracking function here
-        tool_result = log_time(
-            activity=intent.get("activity", "Activity"),
-            minutes=intent.get("minutes", 0),
-            date_iso=intent.get("date_iso"),
-            notes=intent.get("notes", "")
-        )
+        activity = intent.get("activity")
+        minutes = intent.get("minutes")
+        date_iso = intent.get("date_iso")
+        notes = intent.get("notes")
 
-        # tool_result should be a dict or JSON string; adapt as needed
-        # Example: {"message": "I've logged 1 hour of Job Apps for today."}
-        if isinstance(tool_result, str):
-            parsed_res = json.loads(tool_result)
-        else:
-            parsed_res = tool_result
-
-        formatted_msg = parsed_res.get(
-            "message",
-            "I've logged your time entry."
+        formatted_msg = (
+            f"**Time Logged**\n\n"
+            f"- Activity: {activity}\n"
+            f"- Duration: {minutes} minutes\n"
+            f"- Date: {date_iso}"
         )
 
         chat_sessions[username].append(HumanMessage(content=question))
         chat_sessions[username].append(AIMessage(content=formatted_msg))
         save_chat_history()
 
-        if is_saapp:
-            return {"message": formatted_msg}
+        return {
+            "message": formatted_msg,
+            "intent": intent
+        }
 
-        return StreamingResponse(
-            simulate_token_stream(formatted_msg),
-            media_type="text/plain"
-        )
+        # return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
+    
     # --- PATTERN E: NATIVE CONVERSATIONAL TOKEN STREAMER ---
     elif action_type == "run_chat":
         chat_template = ChatPromptTemplate.from_messages([
@@ -320,7 +316,7 @@ Format:
         ])
         
         chat_chain = chat_template | llm | StrOutputParser()
-
+    
         # SAAPP MODE — synchronous, return JSON
         if is_saapp:
             full_response = chat_chain.invoke({
@@ -333,7 +329,7 @@ Format:
             save_chat_history()
 
             return {"message": full_response}
-    
+
         # FRONTEND MODE — streaming
         async def token_streamer():
             full_response = ""
