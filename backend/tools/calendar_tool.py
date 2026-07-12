@@ -6,6 +6,12 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+import os
+import json
+import uuid
+import datetime
+import requests  # <-- add this at the top of the file
+
 
 logger = logging.getLogger("SASS Logger")
 
@@ -37,7 +43,7 @@ def get_calendar_service():
     return build('calendar', 'v3', credentials=creds)
 
 
-def create_google_calendar_event(summary: str, start_time_iso: str, duration_minutes: int = 30) -> str:
+def create_google_calendar_event(username: str, summary: str, start_time_iso: str, duration_minutes: int = 30) -> str:
     """
     Executes a live API network action call to insert an event into your actual Google Calendar.
     """
@@ -71,6 +77,46 @@ def create_google_calendar_event(summary: str, start_time_iso: str, duration_min
         # 4. Push the event directly onto your live primary calendar
         created_event = service.events().insert(calendarId='primary', body=event_payload).execute()
         
+        # --- SAAPP LOCAL MIRROR (CROSS-REPO FILE WRITE) ----------------------------
+        try:
+            # Hardcode the absolute path to the SAAPP JSON storage directory
+            saapp_time_dir = r"C:\Users\jackh\local-rag\saapp_data\time"
+            
+            file_path = os.path.join(saapp_time_dir, f"{username}_events.json")
+            
+            # Safely read the existing SAAPP entries
+            entries = []
+            if os.path.exists(file_path):
+                with open(file_path, "r") as f:
+                    try:
+                        entries = json.load(f)
+                    except json.JSONDecodeError:
+                        pass # File is empty or malformed, start fresh
+            
+            # Create the exact dictionary structure the React frontend expects
+            new_entry = {
+                "id": str(uuid.uuid4()),
+                "username": username,
+                "activity": created_event.get("summary", "Untitled Event"),
+                "duration_hours": float(duration_minutes // 60),
+                "duration_minutes": int(duration_minutes % 60),
+                "date": created_event["start"]["dateTime"].split("T")[0],
+                "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "notes": created_event.get("description", ""),
+                "type": "event"
+            }
+            
+            # Append and write back to the SAAPP repo
+            entries.append(new_entry)
+            with open(file_path, "w") as f:
+                json.dump(entries, f, indent=2)
+                
+            logger.info("[✓] Mirrored event directly into SAAPP JSON file across repos!")
+            
+        except Exception as mirror_error:
+            logger.error(f"[!] Failed to mirror event into SAAPP file: {mirror_error}")
+        # ---------------------------------------------------------------------------
+
         logger.info(f"[✓] Successfully pushed to Google servers! Event Link: {created_event.get('htmlLink')}")
         
         return json.dumps({
