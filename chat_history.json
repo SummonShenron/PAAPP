@@ -2,51 +2,51 @@
     "jack_admin": [
         {
             "type": "human",
-            "content": "can you make a note for me to find jobs to apply to tomorrow?"
+            "content": "create a google calendar event for 11:00 to go to bed"
         },
         {
             "type": "ai",
-            "content": "**Sticky Note Added**\n\nI've pinned that sticky note under 'Jobs for Tomorrow': \"Find jobs to apply to tomorrow\""
+            "content": "**Calendar Scheduled**\n\nI've successfully added 'Go to bed' to your primary Google Calendar for Saturday, July 11 at 11:00 PM."
         },
         {
             "type": "human",
-            "content": "can you save this conversation?"
+            "content": "create a google calendar event for 11:30 to go to bed"
         },
         {
             "type": "ai",
-            "content": "**Conversation Saved**\n\nYour conversation with me has been successfully saved. I'll make sure to keep a record of our chat for future reference. How else can I assist you today?"
+            "content": "**Calendar Scheduled**\n\nI've successfully added 'Go to bed' to your primary Google Calendar for Saturday, July 11 at 11:30 PM."
         },
         {
             "type": "human",
-            "content": "do you remember the conversation we had about setting reminders for calendar events?"
+            "content": "create a google calendar event for 11:00am today to get ready and have lunch"
         },
         {
             "type": "ai",
-            "content": "No, I don't recall a specific conversation about setting reminders for calendar events in this conversation log. As your dedicated personal assistant companion, I'm happy to help you set reminders if needed, though! Can you please provide more context or details about the calendar events you'd like me to remind you about?"
+            "content": "**Calendar Scheduled**\n\nI've successfully added 'Get Ready and Lunch' to your primary Google Calendar for Saturday, July 11 at 11:00 AM."
         },
         {
             "type": "human",
-            "content": "what do you recall?"
+            "content": "delete calendar event arc raiders"
         },
         {
             "type": "ai",
-            "content": "I've reviewed our previous conversations, but I don't have any specific record of a conversation about setting reminders for calendar events. If you could provide more information about the events or meetings you'd like me to remind you about, I'd be happy to help!"
+            "content": "**Calendar Agenda**\n\nHere is your agenda for 2026-07-11:\n- 11:00: Get Ready and Lunch\n- 12:00: Arc Raiders\n- 23:00: Bedtime\n- 23:00: Go to bed\n- 23:00: Go to bed\n- 23:00: Go to bed\n- 23:30: Go to bed"
         },
         {
             "type": "human",
-            "content": "tell me what you do remember"
+            "content": "log 2 hours of css debugging notes: its a struggle"
         },
         {
             "type": "ai",
-            "content": "Let me review our previous conversations... Ah yes! I remember that we had a conversation where you asked me to add a sticky note for \"Find jobs to apply to tomorrow\". I also recall that you saved this conversation. That's the extent of my memory, as we didn't have any prior conversations about setting reminders for calendar events. Would you like me to assist you with anything else?"
+            "content": "**Time Logged**\n\n- Activity: CSS debugging notes: its a struggle\n- Duration: 120 minutes\n- Date: 2026-07-12"
         },
         {
             "type": "human",
-            "content": "no that is stellar. thank you."
+            "content": "update google calendar event run errands with lahari to start at 2:30pm"
         },
         {
             "type": "ai",
-            "content": "You're welcome! It was my pleasure to help. I'm glad I could accurately recall the specific conversation details and provide accurate information. If you need any assistance in the future, don't hesitate to ask. Have a great day!"
+            "content": "**Calendar Updated**\n\nCould not find any events matching 'run errands with lahari' on 2026-07-12."
         }
     ]
 }
