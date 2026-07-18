@@ -48,3 +48,4 @@ client_secrets.json
 # Local Assistant State (Private)
 chat_history.json
 backend/tools/sticky_notes.json
+.env

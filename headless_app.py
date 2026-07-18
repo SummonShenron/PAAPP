@@ -4,13 +4,19 @@ import datetime
 import json
 import logging
 import sys
-from fastapi import FastAPI, HTTPException, Header
+from dotenv import load_dotenv
+from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-
+from pydantic import BaseModel, Field
+import aiohttp
+import aiohttp.resolver
+from langchain_google_genai import ChatGoogleGenerativeAI
+from fastapi.responses import JSONResponse
 # Conversational LLM Core
 from langchain_community.llms import Ollama
+from contextlib import asynccontextmanager
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -24,10 +30,39 @@ from backend.tools.notes_tool import add_sticky_note, read_sticky_notes, clear_s
 from backend.tools.time_tracking import TimeEntry, log_time_internal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(os.path.dirname(BASE_DIR), ".env"))
 USER_DIRECTORY_FILE = os.path.join(BASE_DIR, "directory.json")
 HISTORY_FILE = os.path.join(BASE_DIR, "chat_history.json")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-app = FastAPI(title="Headless PAAPP API")
+session = None
+llm = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global session, llm
+    
+    # 2. Setup inside the lifespan (guaranteed to have an event loop)
+    connector = aiohttp.TCPConnector(
+        ssl=False,
+        use_dns_cache=False,
+        resolver=aiohttp.resolver.ThreadedResolver()
+    )
+    session = aiohttp.ClientSession(connector=connector)
+    
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        temperature=0.7,
+        streaming=True,
+        http_client=session # Now this will execute AFTER the event loop starts
+    )
+    
+    yield
+    
+    # 3. Cleanup
+    await session.close()
+
+app = FastAPI(title="Headless PAAPP API", lifespan=lifespan)
 logger = logging.getLogger("SASS Logger")
 app.add_middleware(
     CORSMiddleware,
@@ -37,9 +72,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Conversational Engine (Ollama Llama3)
-logger.info("[*] Waking up conversational agent core engine (Ollama Llama3)...")
-llm = Ollama(model="llama3")
+# --- 1. Network Config ---
+
+
+
+# --- 2. Initialize Gemini ---
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash", # Ensure this is a valid model string
+    api_key=os.getenv("GOOGLE_API_KEY"),
+    temperature=0.7,
+    streaming=True,
+    http_client=session
+)
 
 
 def save_chat_history():
@@ -105,6 +149,15 @@ with open(USER_DIRECTORY_FILE, "r") as f:
 
 class LoginRequest(BaseModel):
     username: str
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # This prints the specific field that is missing
+    print(f"DEBUG: MISSING FIELD(S): {exc.errors()}") 
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
 
 @app.post("/api/login")
 async def verify_identity_profile(payload: LoginRequest):
@@ -218,7 +271,7 @@ Examples:
 """
 
     try:
-        router_response = llm.invoke(router_prompt)
+        router_response = llm.invoke([HumanMessage(content=router_prompt)])
         intent = clean_and_parse_json(router_response)
         logger.info(f"[+] Evaluated routing classification: {intent}")
     except Exception as e:
@@ -381,6 +434,29 @@ Examples:
         if is_saapp:
             return {"message": formatted_msg}
         return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
+
+class SAAPPEvent(BaseModel):
+    username: str = Field(default="default_user")
+    activity: str
+    start_time: str
+    date: str
+    notes: str | None = ""
+    type: str
+
+
+@app.post("/api/saapp/event")
+async def saapp_create_event(payload: SAAPPEvent):
+    logger.info(f"DEBUG: Incoming payload: {payload}")
+    start_iso = f"{payload.date}T{payload.start_time}:00"
+
+    result = create_google_calendar_event(
+        summary=payload.activity,
+        start_time_iso=start_iso,
+        duration_minutes=30
+    )
+
+    return json.loads(result)
+
 
 @app.get("/api/health")
 async def health_check():
