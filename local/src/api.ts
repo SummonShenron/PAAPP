@@ -1,4 +1,4 @@
-const BASE_URL = 'http://127.0.0.1:8002';
+const BASE_URL = 'https://paapp-u2l9.onrender.com';
 
 export interface ChatResponse {
   user: string;
