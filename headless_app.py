@@ -284,6 +284,7 @@ Examples:
     # --- PATTERN A: STREAM TOOL - CREATE EVENT ---
     if action_type == "call_tool" and tool_name == "create_google_calendar_event":
         tool_result = create_google_calendar_event(
+            username=username,
             summary=intent.get("summary", "Appointment"),
             start_time_iso=intent.get("start_time_iso"),
             duration_minutes=intent.get("duration_minutes", 30)
@@ -434,6 +435,29 @@ Examples:
         if is_saapp:
             return {"message": formatted_msg}
         return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
+    
+class SAAPPEvent(BaseModel):
+    username: str
+    activity: str
+    start_time: str
+    date: str
+    notes: str | None = ""
+    type: str
+
+
+@app.post("/api/saapp/event")
+async def saapp_create_event(payload: SAAPPEvent):
+    start_iso = f"{payload.date}T{payload.start_time}:00"
+
+    result = create_google_calendar_event(
+        username=payload.username,
+        summary=payload.activity,
+        start_time_iso=start_iso,
+        duration_minutes=30
+    )
+
+    return json.loads(result)
+
 
 class SAAPPEvent(BaseModel):
     username: str = Field(default="default_user")

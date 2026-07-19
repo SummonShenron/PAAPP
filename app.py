@@ -113,6 +113,14 @@ async def verify_identity_profile(payload: LoginRequest):
         raise HTTPException(status_code=401, detail="Unauthorized profile claims.")
     return {"status": "authenticated", "principal": username}
 
+class SAAPPEvent(BaseModel):
+    username: str
+    activity: str
+    start_time: str
+    date: str
+    notes: str | None = ""
+    type: str
+
 class ChatRequest(BaseModel):
     username: str
     question: str
@@ -385,6 +393,23 @@ Format:
         if is_saapp:
             return {"message": formatted_msg}
         return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
+
+@app.post("/api/saapp/event")
+async def saapp_create_event(payload: SAAPPEvent):
+    # Convert date + time into ISO format
+    start_iso = f"{payload.date}T{payload.start_time}:00"
+
+    # Default duration: 30 minutes (or whatever you want)
+    duration_minutes = 30
+
+    # Call your existing Google Calendar tool
+    result = create_google_calendar_event(
+        summary=payload.activity,
+        start_time_iso=start_iso,
+        duration_minutes=duration_minutes
+    )
+
+    return json.loads(result)
 
 @app.get("/api/health")
 async def health_check():
