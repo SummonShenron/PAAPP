@@ -436,30 +436,9 @@ Examples:
             return {"message": formatted_msg}
         return StreamingResponse(simulate_token_stream(formatted_msg), media_type="text/plain")
     
+# 1. Ensure the model accepts the username
 class SAAPPEvent(BaseModel):
-    username: str
-    activity: str
-    start_time: str
-    date: str
-    notes: str | None = ""
-    type: str
-
-
-@app.post("/api/saapp/event")
-async def saapp_create_event(payload: SAAPPEvent):
-    start_iso = f"{payload.date}T{payload.start_time}:00"
-
-    result = create_google_calendar_event(
-        username=payload.username,
-        summary=payload.activity,
-        start_time_iso=start_iso,
-        duration_minutes=30
-    )
-
-    return json.loads(result)
-
-
-class SAAPPEvent(BaseModel):
+    # If the frontend doesn't send it, it defaults to 'default_user'
     username: str = Field(default="default_user")
     activity: str
     start_time: str
@@ -467,13 +446,16 @@ class SAAPPEvent(BaseModel):
     notes: str | None = ""
     type: str
 
-
+# 2. Only ONE definition of the route
 @app.post("/api/saapp/event")
 async def saapp_create_event(payload: SAAPPEvent):
-    logger.info(f"DEBUG: Incoming payload: {payload}")
+    logger.info(f"DEBUG: Incoming payload for user '{payload.username}': {payload}")
+    
     start_iso = f"{payload.date}T{payload.start_time}:00"
 
+    # Since there is no auth dependency, use the username from the payload
     result = create_google_calendar_event(
+        username=payload.username, 
         summary=payload.activity,
         start_time_iso=start_iso,
         duration_minutes=30
