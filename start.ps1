@@ -94,6 +94,6 @@ Write-Host ""
 Write-Host "=====================================================================" -ForegroundColor Green
 Write-Host "   SUCCESS: Both engine cores active in separate system instances!   " -ForegroundColor Green
 Write-Host "   - Backend: http://127.0.0.1:8000" -ForegroundColor Green
-Write-Host "   - Frontend: http://127.0.0.1:8080" -ForegroundColor Green
+Write-Host "   - Frontend: https://saapp.onrender.com" -ForegroundColor Green
 Write-Host "=====================================================================" -ForegroundColor Green
 Write-Host ""
