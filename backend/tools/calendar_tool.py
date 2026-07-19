@@ -28,27 +28,19 @@ logger = logging.getLogger("SASS Logger")
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def get_calendar_service():
-    """Handles the secure local OAuth 2.0 flow and caches tokens locally."""
-    creds = None
-    # token.json stores your login session so you don't have to authenticate every time
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # 1. Load credentials from the environment (The 'Client ID' setup)
+    creds_json = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+    
+    # 2. Load the token from the environment (The 'Permission' key)
+    token_json = json.loads(os.getenv("GOOGLE_TOKEN_JSON"))
+    
+    # 3. Combine them to build the service
+    creds = Credentials.from_authorized_user_info(token_json, SCOPES)
+    
+    # Refresh if expired
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
         
-    # If there are no valid local credentials, force the OAuth browser popup
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists('credentials.json'):
-                raise FileNotFoundError("Missing 'credentials.json' in your root backend folder. Please download it from Google Cloud Console.")
-                
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-            
-        # Save the token locally for future requests
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-
     return build('calendar', 'v3', credentials=creds)
 
 
