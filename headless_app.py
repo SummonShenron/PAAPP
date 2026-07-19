@@ -41,14 +41,20 @@ llm = None
 async def lifespan(app: FastAPI):
     global session, llm
     
-    # Write directly to the root folder as requested
+    # 1. Write the credentials to both possible locations
     creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
     if creds_json:
+        # Write to root
         with open("credentials.json", "w") as f:
             f.write(creds_json)
-        logger.info("[+] credentials.json written to root directory.")
+        # Write to backend/ directory (to satisfy the "root backend folder" error)
+        os.makedirs("backend", exist_ok=True)
+        with open("backend/credentials.json", "w") as f:
+            f.write(creds_json)
+        logger.info("[+] credentials.json created in root and backend/.")
     else:
-        logger.warning("[-] GOOGLE_CREDENTIALS_JSON environment variable is missing!")
+        logger.warning("[-] GOOGLE_CREDENTIALS_JSON env var is missing!")
+        
     # 2. Setup inside the lifespan (guaranteed to have an event loop)
     connector = aiohttp.TCPConnector(
         ssl=False,
