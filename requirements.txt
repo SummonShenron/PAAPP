@@ -12,3 +12,9 @@ google-auth-oauthlib
 gunicorn
 python-dotenv
 aiohttp
+langchain_google_genai
+langchain
+langchain-core
+langchain-community
+langchain-google-genai
+langchain-mongodb
