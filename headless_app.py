@@ -40,13 +40,15 @@ llm = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global session, llm
+    
+    # Write directly to the root folder as requested
     creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
     if creds_json:
         with open("credentials.json", "w") as f:
             f.write(creds_json)
-        logger.info("[+] credentials.json generated from environment variables.")
+        logger.info("[+] credentials.json written to root directory.")
     else:
-        logger.warning("[-] No GOOGLE_CREDENTIALS_JSON found. Google API calls will fail.")
+        logger.warning("[-] GOOGLE_CREDENTIALS_JSON environment variable is missing!")
     # 2. Setup inside the lifespan (guaranteed to have an event loop)
     connector = aiohttp.TCPConnector(
         ssl=False,
