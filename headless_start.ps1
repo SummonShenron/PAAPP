@@ -12,24 +12,27 @@ $VenvPath = Join-Path $ProjectDir ".venv"
 if (-not (Test-Path $VenvPath)) {
     Write-Host "[!] Target environment container (.venv) not found." -ForegroundColor Yellow
     Write-Host "[*] Provisioning isolated runtime engine..." -ForegroundColor Yellow
-    
+
     Set-Location $ProjectDir
     python -m venv .venv
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[X] ERROR: Python execution failed. Verify Python is added to your System PATH variables." -ForegroundColor Red
         Pause
         Exit
     }
-    
-    Write-Host "[*] Syncing enterprise dependencies from requirements.txt..." -ForegroundColor Yellow
+
     & ".\.venv\Scripts\python.exe" -m pip install --upgrade pip --quiet
-    & ".\.venv\Scripts\pip.exe" install -r requirements.txt
-    
-    Write-Host "[+] Secure boundary packages initialized successfully!`n" -ForegroundColor Green
 } else {
     Write-Host "[+] Verified localized runtime container consistency (.venv active)." -ForegroundColor Green
 }
+
+# Always re-synced, not just on first creation — otherwise a requirements.txt change (a new
+# dependency, a version bump) silently never reaches an already-existing .venv, and the app
+# only fails at import time with no hint that a stale environment was the cause.
+Write-Host "[*] Syncing enterprise dependencies from requirements.txt..." -ForegroundColor Yellow
+& ".\.venv\Scripts\pip.exe" install -r requirements.txt --quiet
+Write-Host "[+] Secure boundary packages up to date!`n" -ForegroundColor Green
 
 # --- APPLICATION ORCHESTRATION LAYER ---
 
